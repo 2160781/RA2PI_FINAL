@@ -7,18 +7,18 @@ android:orientation="horizontal"
 android:layout_width="match_parent"
 android:layout_height="match_parent">
 
-<ListView
-    android:id="@+id/listview_usersList"
-    android:layout_width="142dp"
-    android:layout_height="176dp"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintHorizontal_bias="0.988"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintVertical_bias="0.0">
+    <ListView
+        android:id="@+id/listview_usersList"
+        android:layout_width="142dp"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.988"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0">
 
-</ListView>
+    </ListView>
 <FrameLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
