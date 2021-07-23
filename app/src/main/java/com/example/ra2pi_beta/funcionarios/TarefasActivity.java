@@ -1,10 +1,14 @@
 package com.example.ra2pi_beta.funcionarios;
 
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,8 +18,64 @@ import com.example.ra2pi_beta.MainActivity;
 import com.example.ra2pi_beta.R;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.pedro.library.AutoPermissions;
+import com.pedro.library.AutoPermissionsListener;
 
-public class TarefasActivity extends AppCompatActivity {
+import org.jetbrains.annotations.NotNull;
+
+public class TarefasActivity extends AppCompatActivity implements @NotNull AutoPermissionsListener {
+
+    public void onRequestPermissionsResult(int requestCode,String permissions[],int[] grantResults){
+        super.onRequestPermissionsResult(requestCode,permissions,grantResults);
+        AutoPermissions.Companion.parsePermissions(this,requestCode,permissions,this);
+    }
+    @Override
+    public void onDenied(int i, @NotNull String[] strings) {
+    }
+
+    @Override
+    public void onGranted(int i, @NotNull String[] strings) {
+    }
+
+    class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+        private SurfaceHolder mHolder;
+        private Camera camera = null;
+
+        public CameraSurfaceView (Context context){
+            super(context);
+            mHolder = getHolder();
+            mHolder.addCallback(this);
+        }
+        public void surfaceCreated(SurfaceHolder holder){
+            camera = Camera.open();
+            try {
+                camera.setPreviewDisplay(mHolder);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+
+        }
+        public void surfaceChanged (SurfaceHolder holder, int format,int width, int height){
+            camera.startPreview();
+        }
+
+        public void surfaceDestroyed (SurfaceHolder holder){
+            camera.stopPreview();
+            camera.release();
+            camera = null;
+        }
+
+        public boolean capture(Camera.PictureCallback handler){
+            if (camera != null){
+                camera.takePicture(null,null,handler);
+                return true;
+            }else {
+                return false;
+            }
+        }
+    }
+
+    TarefasActivity.CameraSurfaceView cameraView;
 
     boolean estadoBoton;
     Button boton;
@@ -23,7 +83,6 @@ public class TarefasActivity extends AppCompatActivity {
     int numeroPlano = 0;
     int posicao = 0;
     String estado;
-    ImageView ver_imagem;
     private DatabaseReference mDatabase;
 
     @Override
@@ -34,21 +93,23 @@ public class TarefasActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tarefas);
 
+        FrameLayout previewFrame = findViewById(R.id.previewFrame);
+        cameraView = new CameraSurfaceView(this);
+        previewFrame.addView(cameraView);
+
+        AutoPermissions.Companion.loadAllPermissions(this,101);
+
         estadoBoton=true;
         boton=findViewById(R.id.Button);
         textV= findViewById(R.id.textView);
-        ver_imagem =findViewById(R.id.imageView);
 
         numeroPlano = getIntent().getIntExtra("NumeroPlano",0);
 
         if(PlayActivity.Main.dadosApp_.getFeito(numeroPlano,0) == false){
             estado = " Por fazer";
-            ver_imagem.setImageResource(R.drawable.errado);
         }else{
             estado = " Feito";
-            ver_imagem.setImageResource(R.drawable.certo);
         }
-
         textV.setText(PlayActivity.Main.dadosApp_.getTextTarefa(numeroPlano,posicao)+":"
                 + estado);
 
@@ -70,10 +131,8 @@ public class TarefasActivity extends AppCompatActivity {
 
                         if(PlayActivity.Main.dadosApp_.getFeito(numeroPlano, posicao) == false){
                             estado = " Por fazer";
-                            ver_imagem.setImageResource(R.drawable.errado);
                         }else{
                             estado = " Feito";
-                            ver_imagem.setImageResource(R.drawable.certo);
                         }
                         textV.setText(PlayActivity.Main.dadosApp_.getTextTarefa(numeroPlano,
                                 posicao)+" : " + estado);
@@ -90,14 +149,11 @@ public class TarefasActivity extends AppCompatActivity {
                         estadoBoton = false;
                         if(PlayActivity.Main.dadosApp_.getFeito(numeroPlano,posicao) == false){
                             estado = " Por fazer";
-                            ver_imagem.setImageResource(R.drawable.errado);
                         }else{
                             estado = " Feito";
-                            ver_imagem.setImageResource(R.drawable.certo);
                         }
                         textV.setText(PlayActivity.Main.dadosApp_.getTextTarefa(numeroPlano,posicao)
                                 + " : " + estado);
-
                     }
                 }
                 return true;
@@ -107,7 +163,6 @@ public class TarefasActivity extends AppCompatActivity {
                     int position = posicao;
                     if(PlayActivity.Main.dadosApp_.getFeito(numeroPlano,position) == false){
                         PlayActivity.Main.dadosApp_.marcarFeito(numeroPlano,position);
-                        ver_imagem.setImageResource(R.drawable.certo);
                         estado = " Feito";
                         textV.setText(PlayActivity.Main.dadosApp_.getTextTarefa(numeroPlano,posicao)
                                 + " : " + estado);
@@ -121,7 +176,6 @@ public class TarefasActivity extends AppCompatActivity {
                     int position = posicao;
                     if(PlayActivity.Main.dadosApp_.getFeito(numeroPlano,position) == true){
                         PlayActivity.Main.dadosApp_.marcarErrado(numeroPlano,position);
-                        ver_imagem.setImageResource(R.drawable.errado);
                         estado = " Por fazer";
                         textV.setText(PlayActivity.Main.dadosApp_.getTextTarefa(numeroPlano,posicao)
                                 + " : " + estado);
@@ -139,6 +193,11 @@ public class TarefasActivity extends AppCompatActivity {
             default:
                 return super.dispatchKeyEvent(event);
         }
+
+    }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
 
     }
 
